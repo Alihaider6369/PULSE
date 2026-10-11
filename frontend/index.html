@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PULSE</h1>
+      <p class="subtitle">Your posture, measured kindly</p>
+    </div>
+    <div id="status" class="status">Live data</div>
+  </header>
+
+  <main>
+    <h2 class="dash-title">Dashboard</h2>
+
+    <section class="nav-boxes">
+      <a class="nav-box live" href="/live.html">
+        <div class="icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4 12a8 8 0 0 1 16 0"/><path d="M2 12a10 10 0 0 1 20 0"/></svg>
+        </div>
+        <h3>Live Monitoring</h3>
+        <p>See your posture right now</p>
+      </a>
+      <a class="nav-box history" href="/history.html">
+        <div class="icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 2v4M16 2v4"/></svg>
+        </div>
+        <h3>Session History</h3>
+        <p>All past sessions and scores</p>
+      </a>
+      <a class="nav-box settings" href="/settings.html">
+        <div class="icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </div>
+        <h3>Settings</h3>
+        <p>Threshold, cooldown and sound</p>
+      </a>
+    </section>
+
+    <div class="banner" id="banner">Keep it up, small posture breaks make a big difference.</div>
+
+    <section class="score-hero">
+      <div>
+        <div class="value" id="hero-score">-</div>
+        <div class="label">Average awareness score</div>
+      </div>
+      <p class="tip" id="hero-tip">Start a monitoring session to see your score.</p>
+    </section>
+
+    <section class="cards">
+      <div class="card cyan"><h3>Sessions</h3><p id="total-sessions">-</p></div>
+      <div class="card"><h3>Total time</h3><p id="total-time">-</p></div>
+      <div class="card good"><h3>Good posture</h3><p id="good-time">-</p></div>
+      <div class="card poor"><h3>Poor posture</h3><p id="poor-time">-</p></div>
+      <div class="card warn"><h3>Warnings</h3><p id="warnings">-</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>Score trend</h2>
+      <canvas id="score-chart"></canvas>
+    </section>
+
+    <section class="panel">
+      <h2>Recent sessions</h2>
+      <table>
+        <thead>
+          <tr><th>Started</th><th>Duration</th><th>Good</th><th>Poor</th><th>Warnings</th><th>Score</th></tr>
+        </thead>
+        <tbody id="sessions-body"></tbody>
+      </table>
+    </section>
+
+    <p class="note">PULSE Posture Awareness Score is a project indicator, not a medical measurement.</p>
+  </main>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

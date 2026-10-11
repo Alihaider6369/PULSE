@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE Session History</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PULSE</h1>
+      <p class="subtitle">Session history</p>
+    </div>
+    <a href="/" class="status">Back to dashboard</a>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="toolbar">
+        <h2>All sessions</h2>
+        <select id="filter">
+          <option value="all">All sessions</option>
+          <option value="good">Score 80% and above</option>
+          <option value="mid">Score 60% to 79%</option>
+          <option value="poor">Score below 60%</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Started</th><th>Duration</th><th>Good</th><th>Poor</th><th>Warnings</th><th>Score</th></tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+      <p id="empty" class="note" hidden>No sessions found for this filter.</p>
+    </section>
+  </main>
+
+  <script src="/js/history.js"></script>
+</body>
+</html>

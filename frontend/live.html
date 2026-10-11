@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE Live</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PULSE</h1>
+      <p class="subtitle">Live monitoring</p>
+    </div>
+    <a href="/" class="status">Back to dashboard</a>
+  </header>
+
+  <main>
+    <section class="score-hero">
+      <div>
+        <div class="value" id="live-posture">-</div>
+        <div class="label" id="live-state">Waiting for monitor</div>
+      </div>
+      <p class="tip" id="live-tip">Run python monitor\monitor.py to start.</p>
+    </section>
+
+    <section class="cards">
+      <div class="card cyan"><h3>Warnings</h3><p id="live-warnings">-</p></div>
+      <div class="card good"><h3>Good</h3><p id="live-good">-</p></div>
+      <div class="card poor"><h3>Poor</h3><p id="live-poor">-</p></div>
+      <div class="card"><h3>Session</h3><p id="live-session">-</p></div>
+    </section>
+
+    <p class="note">Updates every 2 seconds.</p>
+  </main>
+
+  <script src="/js/live.js"></script>
+</body>
+</html>

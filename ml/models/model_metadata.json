@@ -1,0 +1,81 @@
+{
+  "model_name": "svm_rbf",
+  "classes": [
+    "good",
+    "lean_left",
+    "lean_right",
+    "poor_posture"
+  ],
+  "merged_classes": {
+    "poor_posture": [
+      "forward_head",
+      "slouch"
+    ]
+  },
+  "feature_names": [
+    "shoulder_width_ratio",
+    "shoulder_tilt_deg",
+    "head_offset_x",
+    "nose_height",
+    "ear_mid_height",
+    "ear_height_l",
+    "ear_height_r",
+    "ear_shoulder_dx_l",
+    "ear_shoulder_dx_r",
+    "head_tilt_deg",
+    "neck_angle_deg",
+    "head_shoulder_dist",
+    "nose_z_rel"
+  ],
+  "cv": "leave-one-session-out",
+  "results": {
+    "dummy_most_frequent": {
+      "fold_macro_f1": [
+        0.1441,
+        0.142
+      ],
+      "mean_macro_f1": 0.143
+    },
+    "logistic_regression": {
+      "fold_macro_f1": [
+        0.867,
+        0.9685
+      ],
+      "mean_macro_f1": 0.9177
+    },
+    "decision_tree": {
+      "fold_macro_f1": [
+        0.3577,
+        0.7054
+      ],
+      "mean_macro_f1": 0.5316
+    },
+    "random_forest": {
+      "fold_macro_f1": [
+        0.8998,
+        0.7075
+      ],
+      "mean_macro_f1": 0.8037
+    },
+    "svm_rbf": {
+      "fold_macro_f1": [
+        0.8935,
+        0.9923
+      ],
+      "mean_macro_f1": 0.9429
+    },
+    "gradient_boosting": {
+      "fold_macro_f1": [
+        0.4063,
+        0.6986
+      ],
+      "mean_macro_f1": 0.5525
+    }
+  },
+  "best_mean_macro_f1": 0.9429,
+  "trained_rows": 1445,
+  "sessions": [
+    "1bac9fa6",
+    "edccdc4a"
+  ]
+}

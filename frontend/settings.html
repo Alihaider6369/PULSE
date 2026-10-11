@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE Settings</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PULSE</h1>
+      <p class="subtitle">Settings</p>
+    </div>
+    <a href="/" class="status">Back to dashboard</a>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Monitor settings</h2>
+      <form id="settings-form">
+        <label>Poor posture threshold (seconds)
+          <input type="number" id="threshold" min="5" max="600" step="1" required>
+        </label>
+        <label>Cooldown between warnings (seconds)
+          <input type="number" id="cooldown" min="10" max="3600" step="1" required>
+        </label>
+        <label>Warning duration (seconds)
+          <input type="number" id="warning-duration" min="1" max="60" step="1" required>
+        </label>
+        <label>Minimum confidence (0 to 1)
+          <input type="number" id="min-confidence" min="0" max="1" step="0.05" required>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="sound"> Sound alert enabled
+        </label>
+
+        <div class="actions">
+          <button type="submit">Save settings</button>
+          <span id="message" class="message"></span>
+        </div>
+      </form>
+    </section>
+
+    <p class="note">Changes apply to the next monitoring session.</p>
+  </main>
+
+  <script src="/js/settings.js"></script>
+</body>
+</html>
