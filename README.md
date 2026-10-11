@@ -10,20 +10,6 @@ Four posture classes: good, poor (slouch/forward head), lean left, lean right
 Warnings after a configurable time in poor posture, with a cooldown and sound
 Sessions saved to PostgreSQL with a PULSE Posture Awareness Score
 FastAPI backend and a simple web dashboard (summary, history, live status, settings)
-Architecture
-Webcam -> OpenCV -> MediaPipe PoseLandmarker -> landmarks
-   -> pulse_features.py (shared feature code)
-   -> scikit-learn SVM model -> posture class
-   -> temporal logic (smoothing, warning timer, cooldown)
-   -> monitor.py -> FastAPI -> PostgreSQL
-   -> browser dashboard (reads the API)
-
-The camera and the model run locally in monitor/monitor.py. The browser only reads data from the API. Video and images are never saved.
-
-Tech stack
-
-Python 3.13, OpenCV, MediaPipe (Tasks API), NumPy, Pandas, scikit-learn, FastAPI, SQLAlchemy, Alembic, PostgreSQL 17, plain HTML/CSS/JavaScript, Chart.js.
-
 Setup (Windows)
 Create and activate a virtual environment:
 cmd
@@ -50,15 +36,10 @@ Start the backend: cd backend then uvicorn app.main:app --reload
 In another terminal, start the monitor: python monitor\monitor.py
 Open the dashboard: http://127.0.0.1:8000/
 Press Q in the camera window to stop.
-API
-
-Interactive docs: http://127.0.0.1:8000/docs
-
-Privacy
-Video and images are processed locally and never saved or uploaded.
-Only numbers are stored: session totals, posture events, and settings.
 Limitations
 Trained on data from one person, so accuracy on others may be lower.
 Lighting, camera angle, and partial body visibility affect detection.
 Slouching and forward head are merged, because a front webcam cannot separate them reliably.
 This is a posture-awareness tool, not a medical device.
+Team
+Ali Haider (BS Data Science)
