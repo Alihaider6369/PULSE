@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
     """Parent class for all database tables (models)."""
 
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+engine = create_engine(settings.sync_database_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 

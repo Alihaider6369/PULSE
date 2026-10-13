@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class PostureEventIn(BaseModel):
     session_id: int
+    client_uuid: Optional[str] = Field(default=None, max_length=64)
     posture_class: str = Field(min_length=1, max_length=32)
     confidence: Optional[float] = Field(default=None, ge=0, le=1)
     duration_seconds: float = Field(default=0.0, ge=0)
@@ -17,6 +18,7 @@ class PostureEventOut(BaseModel):
 
     id: int
     session_id: int
+    client_uuid: Optional[str] = None
     occurred_at: datetime
     posture_class: str
     confidence: Optional[float]

@@ -110,7 +110,8 @@ function renderChart(sessions) {
 async function loadDashboard() {
   const status = document.getElementById("status");
   try {
-    const res = await fetch(API);
+    const fetchFunc = window.Auth ? window.Auth.authFetch.bind(window.Auth) : fetch;
+    const res = await fetchFunc(API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const sessions = await res.json();
     renderHero(sessions);

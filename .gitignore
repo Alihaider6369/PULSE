@@ -6,7 +6,9 @@ env/
 # Secrets (NEVER commit)
 .env
 *.env
+.env.*
 !.env.example
+!.env.production.example
 
 # Python cache
 __pycache__/
@@ -39,4 +41,6 @@ Thumbs.db
 *.log
 dist/
 build/
+dist_installer/
 *.egg-info/
+desktop_app/data/

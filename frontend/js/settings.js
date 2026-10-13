@@ -8,7 +8,8 @@ function showMessage(text, ok) {
 
 async function loadSettings() {
   try {
-    const res = await fetch(API);
+    const fetchFunc = window.Auth ? window.Auth.authFetch.bind(window.Auth) : fetch;
+    const res = await fetchFunc(API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const s = await res.json();
     document.getElementById("threshold").value = s.poor_posture_threshold_seconds;
@@ -33,7 +34,8 @@ async function saveSettings(event) {
   };
 
   try {
-    const res = await fetch(API, {
+    const fetchFunc = window.Auth ? window.Auth.authFetch.bind(window.Auth) : fetch;
+    const res = await fetchFunc(API, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
