@@ -1,4 +1,4 @@
-"""Authentication dialog for desktop app: Login and Registration."""
+import re
 from typing import Optional
 
 from PySide6.QtCore import Qt
@@ -16,14 +16,16 @@ from PySide6.QtWidgets import (
 from desktop_app.core.client import PulseApiClient
 from desktop_app.ui.theme import COLORS
 
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
 
 class AuthDialog(QDialog):
-    """Modal dialog allowing users to sign in or create an account."""
+    """Modal dialog allowing users to sign in, create an account, or request password reset."""
 
     def __init__(self, api_client: PulseApiClient, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.api_client = api_client
-        self.is_signup_mode = False
+        self.mode = "login"  # "login", "signup", "forgot"
 
         self.setWindowTitle("PULSE — Account Authentication")
         self.setFixedWidth(420)
@@ -73,12 +75,37 @@ class AuthDialog(QDialog):
         layout.addWidget(self.txt_email)
 
         # Password
+        self.password_container = QWidget()
+        pwd_layout = QVBoxLayout(self.password_container)
+        pwd_layout.setContentsMargins(0, 0, 0, 0)
+        pwd_layout.setSpacing(6)
+
+        pwd_header = QHBoxLayout()
         lbl_password = QLabel("Password:")
+        lbl_password.setStyleSheet("font-size: 13px;")
+        self.btn_forgot = QPushButton("Forgot password?")
+        self.btn_forgot.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: none;
+                color: #818cf8;
+                font-size: 11px;
+                text-decoration: underline;
+            }}
+            QPushButton:hover {{ color: {COLORS['primary_hover']}; }}
+        """)
+        self.btn_forgot.clicked.connect(lambda: self._set_mode("forgot"))
+        pwd_header.addWidget(lbl_password)
+        pwd_header.addStretch()
+        pwd_header.addWidget(self.btn_forgot)
+        pwd_layout.addLayout(pwd_header)
+
         self.txt_password = QLineEdit()
         self.txt_password.setEchoMode(QLineEdit.EchoMode.Password)
         self.txt_password.setPlaceholderText("At least 8 characters")
-        layout.addWidget(lbl_password)
-        layout.addWidget(self.txt_password)
+        pwd_layout.addWidget(self.txt_password)
+
+        layout.addWidget(self.password_container)
 
         # Status / Error Label
         self.lbl_msg = QLabel("")
@@ -125,38 +152,73 @@ class AuthDialog(QDialog):
         toggle_row.addStretch()
         layout.addLayout(toggle_row)
 
-    def _toggle_mode(self) -> None:
-        self.is_signup_mode = not self.is_signup_mode
+    def _set_mode(self, mode: str) -> None:
+        self.mode = mode
         self.lbl_msg.setText("")
-        if self.is_signup_mode:
+        self.lbl_msg.setStyleSheet(f"font-size: 12px; color: {COLORS['danger']};")
+
+        if mode == "signup":
             self.lbl_title.setText("Create PULSE Account")
+            self.lbl_subtitle.setText("Start tracking your posture habits privately")
             self.btn_submit.setText("Register & Sign In")
             self.lbl_toggle.setText("Already registered?")
             self.btn_toggle.setText("Sign in")
             self.lbl_name.setVisible(True)
             self.txt_name.setVisible(True)
+            self.password_container.setVisible(True)
+            self.btn_forgot.setVisible(False)
+        elif mode == "forgot":
+            self.lbl_title.setText("Reset Password")
+            self.lbl_subtitle.setText("Enter your email to receive a password reset link")
+            self.btn_submit.setText("Send Reset Link")
+            self.lbl_toggle.setText("Remembered password?")
+            self.btn_toggle.setText("Sign in")
+            self.lbl_name.setVisible(False)
+            self.txt_name.setVisible(False)
+            self.password_container.setVisible(False)
         else:
+            self.mode = "login"
             self.lbl_title.setText("Sign in to PULSE")
+            self.lbl_subtitle.setText("Synchronize your ergonomic sessions across devices")
             self.btn_submit.setText("Sign In")
             self.lbl_toggle.setText("Don't have an account?")
             self.btn_toggle.setText("Create one")
             self.lbl_name.setVisible(False)
             self.txt_name.setVisible(False)
+            self.password_container.setVisible(True)
+            self.btn_forgot.setVisible(True)
+
+    def _toggle_mode(self) -> None:
+        if self.mode == "login":
+            self._set_mode("signup")
+        else:
+            self._set_mode("login")
 
     def _handle_submit(self) -> None:
         email = self.txt_email.text().strip()
-        password = self.txt_password.text().strip()
         self.lbl_msg.setText("")
+        self.lbl_msg.setStyleSheet(f"font-size: 12px; color: {COLORS['danger']};")
 
-        if not email or "@" not in email:
-            self.lbl_msg.setText("Please enter a valid email address.")
+        # 1. Client-side email validation
+        if not email or not EMAIL_REGEX.match(email):
+            self.lbl_msg.setText("Enter a valid email address")
             return
 
+        if self.mode == "forgot":
+            ok, msg = self.api_client.forgot_password(email=email)
+            if ok:
+                self.lbl_msg.setStyleSheet(f"font-size: 12px; color: {COLORS['success']};")
+                self.lbl_msg.setText(msg)
+            else:
+                self.lbl_msg.setText(msg)
+            return
+
+        password = self.txt_password.text().strip()
         if len(password) < 8:
-            self.lbl_msg.setText("Password must be at least 8 characters long.")
+            self.lbl_msg.setText("Password must be at least 8 characters long")
             return
 
-        if self.is_signup_mode:
+        if self.mode == "signup":
             name = self.txt_name.text().strip() or None
             ok, msg = self.api_client.signup(email=email, password=password, full_name=name)
         else:

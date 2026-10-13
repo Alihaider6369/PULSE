@@ -109,6 +109,14 @@ function renderChart(sessions) {
 
 async function loadDashboard() {
   const status = document.getElementById("status");
+
+  // Configure dynamic desktop download URL if configured
+  const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://github.com/alihaider/pulse/releases/latest";
+  const downloadBtn = document.getElementById("btn-download-app");
+  if (downloadBtn) {
+    downloadBtn.href = downloadUrl;
+  }
+
   try {
     const fetchFunc = window.Auth ? window.Auth.authFetch.bind(window.Auth) : fetch;
     const res = await fetchFunc(API);

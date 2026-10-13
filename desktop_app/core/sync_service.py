@@ -50,20 +50,30 @@ class SyncService(QObject):
                 self._is_syncing = True
 
             try:
-                self.sync_started.emit()
+                try:
+                    self.sync_started.emit()
+                except RuntimeError:
+                    return
+
                 # 1. Ping health
                 is_ok, _, _ = self.api_client.check_health()
                 if not is_ok:
                     stats = self.storage.get_sync_stats(user_email=self.api_client.get_user_email())
-                    self.stats_updated.emit(stats)
-                    self.sync_finished.emit(0, 0, "Backend unreachable")
+                    try:
+                        self.stats_updated.emit(stats)
+                        self.sync_finished.emit(0, 0, "Backend unreachable")
+                    except RuntimeError:
+                        pass
                     return
 
                 # 2. Sync pending records
                 synced, failed, err = self.api_client.sync_pending_records()
                 stats = self.storage.get_sync_stats(user_email=self.api_client.get_user_email())
-                self.stats_updated.emit(stats)
-                self.sync_finished.emit(synced, failed, err)
+                try:
+                    self.stats_updated.emit(stats)
+                    self.sync_finished.emit(synced, failed, err)
+                except RuntimeError:
+                    pass
             finally:
                 with self._lock:
                     self._is_syncing = False

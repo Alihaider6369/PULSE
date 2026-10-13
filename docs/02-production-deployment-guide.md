@@ -37,11 +37,26 @@ A template file is provided at [`backend/.env.production.example`](file:///D:/PU
 | `CORS_ORIGINS` | String | Yes | Comma-separated list of approved web dashboard HTTPS domains | `https://pulse.example.com,https://dashboard.pulse.example.com` |
 | `COOKIE_SECURE` | Boolean | Yes | Ensures authentication cookies are only transmitted over HTTPS | `true` |
 | `ENVIRONMENT` | String | Yes | Runtime environment flag | `production` |
+| `APP_BASE_URL` | String | No | Public web dashboard origin for generating reset links (default: `http://127.0.0.1:8000`) | `https://pulse.example.com` |
+| `SMTP_HOST` | String | No | Outbound SMTP relay hostname (if empty, reset links log to stdout) | `smtp.sendgrid.net` |
+| `SMTP_PORT` | Integer | No | SMTP relay port (default: `587`) | `587` |
+| `SMTP_USER` | String | Conditional | SMTP username (required if `SMTP_HOST` is configured) | `apikey` |
+| `SMTP_PASSWORD` | String | Conditional | SMTP password or API token (required if `SMTP_HOST` is configured) | Configured in cloud secrets |
+| `SMTP_FROM` | String | No | Sender address in From header (defaults to `SMTP_USER` if omitted) | `noreply@pulse.example.com` |
 
 > [!WARNING]
 > Never commit real production `.env` files or hardcoded credentials to Git. Inject environment variables using your cloud provider's encrypted secrets manager.
 >
 > **Mandatory Secrets:** `SECRET_KEY` and `POSTGRES_PASSWORD` are mandatory and must be set in `.env` (generate secure values with: `openssl rand -hex 32`). The backend and compose services will refuse to start if these are missing.
+
+### Password reset email (SMTP)
+
+PULSE supports self-service password recovery via cryptographically hashed tokens dispatched to user email addresses:
+
+- **Development / Local Fallback:** When `SMTP_HOST` is unset, outbound email sending is skipped and generated reset links are safely logged to backend stdout for local development and verification.
+- **Production Configuration:** To deliver emails in production, set `SMTP_HOST`, `SMTP_PORT` (typically 587 with STARTTLS), `SMTP_USER`, and `SMTP_PASSWORD` using your transactional email provider (such as SendGrid, AWS SES, Mailgun, Postmark, or Google Workspace).
+- **Public Domain Linkage:** Set `APP_BASE_URL` to your production HTTPS domain (e.g. `https://pulse.example.com`). The password reset email includes a link formatted as `${APP_BASE_URL}/reset-password.html?token=<token>`.
+- **Security Protections:** Raw tokens are 32-byte cryptographically secure random values with a 1-hour expiration. Only SHA-256 hashes are persisted in the `password_reset_tokens` table. Each token is strictly single-use (`used_at` timestamp). Both user enumeration protection and endpoint rate limiting (3 requests/hour per email) are active.
 
 ---
 

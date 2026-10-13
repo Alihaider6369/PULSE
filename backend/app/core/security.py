@@ -7,6 +7,9 @@ import jwt
 
 from app.core.config import settings
 
+# Constant dummy bcrypt hash for timing attack protection when email is not found
+DUMMY_BCRYPT_HASH = "$2b$12$q7pIZakZtsPYDI8nkDHqy.YK19HDFWRdQWSo4KcKaNo5PMnDEfgBi"
+
 
 def hash_password(password: str) -> str:
     """Hash a plaintext password using bcrypt with auto-generated salt."""

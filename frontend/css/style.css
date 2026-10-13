@@ -285,9 +285,140 @@ tbody tr:hover { background: #f9fafb; }
 .actions button:hover { opacity: 0.9; }
 .message { font-size: 14px; font-weight: 500; }
 
+/* Desktop App Launch Bar */
+.desktop-launch-bar {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.desktop-launch-bar .launch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.desktop-launch-bar .launch-info strong {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.desktop-launch-bar .launch-info span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.desktop-launch-bar .launch-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-launch-app {
+  background: linear-gradient(120deg, #7c3aed, #9333ea);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn-launch-app:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btn-download-app {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-download-app:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* Header User Info & Logout Button */
+.user-email-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.user-email-text .user-icon {
+  stroke: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+#btn-logout,
+.btn-logout {
+  background: #ffffff;
+  border: 1px solid #000000;
+  color: #000000;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+#btn-logout:hover,
+.btn-logout:hover {
+  background-color: #f3f4f6;
+  border-color: #000000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+#btn-logout:active,
+.btn-logout:active {
+  background-color: #e5e7eb;
+  transform: translateY(0);
+}
+
 @media (max-width: 600px) {
   header { padding: 18px 16px; }
   main { padding: 20px 12px; }
   .card p { font-size: 22px; }
   .score-hero .value { font-size: 40px; }
+  #auth-header-container { gap: 8px; }
+  .user-email-text { font-size: 12px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  #btn-logout,
+  .btn-logout { padding: 5px 12px; font-size: 11px; }
 }

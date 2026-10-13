@@ -1,5 +1,6 @@
 """Enhanced REST API client for PULSE with JWT authentication and idempotent synchronization."""
 import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from desktop_app.config import APP_DATA_DIR
 from desktop_app.core.storage import LocalStorage
 
 AUTH_SESSION_FILE = APP_DATA_DIR / "auth_session.json"
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class PulseApiClient:
@@ -58,6 +60,11 @@ class PulseApiClient:
     # ---------------- Authentication ----------------
 
     def signup(self, email: str, password: str, full_name: Optional[str] = None) -> Tuple[bool, str]:
+        email = email.strip()
+        if not EMAIL_REGEX.match(email):
+            return False, "Enter a valid email address"
+        if len(password) < 8:
+            return False, "Password must be at least 8 characters long"
         try:
             r = requests.post(
                 f"{self.base_url}/auth/signup",
@@ -74,6 +81,9 @@ class PulseApiClient:
             return False, f"Connection failed: {str(exc)}"
 
     def login(self, email: str, password: str) -> Tuple[bool, str]:
+        email = email.strip()
+        if not EMAIL_REGEX.match(email):
+            return False, "Enter a valid email address"
         try:
             r = requests.post(
                 f"{self.base_url}/auth/login",
@@ -84,7 +94,29 @@ class PulseApiClient:
                 data = r.json()
                 self._set_session(data["access_token"], data["user"])
                 return True, "Logged in successfully"
+            if r.status_code == 429:
+                return False, "Too many attempts. Try again later."
+            if r.status_code == 401:
+                return False, "Invalid email or password"
             detail = r.json().get("detail", "Invalid email or password")
+            return False, str(detail)
+        except Exception as exc:
+            return False, f"Connection failed: {str(exc)}"
+
+    def forgot_password(self, email: str) -> Tuple[bool, str]:
+        email = email.strip()
+        if not EMAIL_REGEX.match(email):
+            return False, "Enter a valid email address"
+        try:
+            r = requests.post(
+                f"{self.base_url}/auth/forgot-password",
+                json={"email": email},
+                timeout=4.0,
+            )
+            data = r.json()
+            if r.status_code == 200:
+                return True, data.get("message", "If this email is registered, a password reset link has been sent.")
+            detail = data.get("detail", "Failed to send reset link")
             return False, str(detail)
         except Exception as exc:
             return False, f"Connection failed: {str(exc)}"

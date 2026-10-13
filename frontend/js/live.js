@@ -16,7 +16,8 @@ async function refresh() {
   const el = document.getElementById("live-posture");
   const state = document.getElementById("live-state");
   try {
-    const res = await fetch(API);
+    const targetUrl = window.getPulseApiUrl ? window.getPulseApiUrl(API) : API;
+    const res = await fetch(targetUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const s = await res.json();
 
@@ -43,6 +44,10 @@ async function refresh() {
     state.textContent = "Backend offline";
   }
 }
+
+const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://github.com/alihaider/pulse/releases/latest";
+const liveDownloadBtn = document.getElementById("btn-live-download");
+if (liveDownloadBtn) liveDownloadBtn.href = downloadUrl;
 
 refresh();
 setInterval(refresh, 2000);

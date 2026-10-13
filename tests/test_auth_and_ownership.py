@@ -15,8 +15,10 @@ BACKEND_DIR = ROOT / "backend"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(BACKEND_DIR))
 
+from app.core.rate_limit import forgot_password_limiter, login_limiter
 from app.core.security import verify_password
 from app.database.session import Base, get_db
+from app.models.password_reset_token import PasswordResetToken
 from app.main import app
 
 # Isolated in-memory SQLite database for test execution
@@ -257,3 +259,164 @@ def test_idempotent_synchronization(client):
     assert res_list.status_code == 200
     assert len(res_list.json()) == 1
     assert res_list.json()[0]["client_uuid"] == "sync-uuid-session-001"
+
+
+# ---------------- Safer Login Errors & Password Reset Tests ----------------
+
+def test_safer_login_errors_and_rate_limiting(client, test_db):
+    """Verify email format validation, timing-safe 401 error message, and 5-attempt rate limit."""
+    login_limiter.clear()
+
+    # 1. Invalid email format -> 422 "Enter a valid email address"
+    res_bad_email = client.post("/api/auth/login", json={
+        "email": "not-valid-email",
+        "password": "ValidPassword123!",
+    })
+    assert res_bad_email.status_code == 422
+    assert res_bad_email.json()["detail"] == "Enter a valid email address"
+
+    # 2. Non-existent email -> 401 "Invalid email or password"
+    res_unknown = client.post("/api/auth/login", json={
+        "email": "unknown_user@example.com",
+        "password": "RandomPassword123!",
+    })
+    assert res_unknown.status_code == 401
+    assert res_unknown.json()["detail"] == "Invalid email or password"
+
+    # 3. Create registered user
+    client.post("/api/auth/signup", json={
+        "email": "rate_limit_user@example.com",
+        "password": "CorrectPassword123!",
+    })
+
+    # 4. Wrong password -> 401 "Invalid email or password"
+    res_wrong = client.post("/api/auth/login", json={
+        "email": "rate_limit_user@example.com",
+        "password": "WrongPassword123!",
+    })
+    assert res_wrong.status_code == 401
+    assert res_wrong.json()["detail"] == "Invalid email or password"
+
+    # 5. Trigger rate limiter: attempt 2, 3, 4, 5 fail with 401
+    for _ in range(4):
+        res_fail = client.post("/api/auth/login", json={
+            "email": "rate_limit_user@example.com",
+            "password": "WrongPassword123!",
+        })
+        assert res_fail.status_code == 401
+
+    # 6th attempt -> 429 Too many attempts
+    res_blocked = client.post("/api/auth/login", json={
+        "email": "rate_limit_user@example.com",
+        "password": "WrongPassword123!",
+    })
+    assert res_blocked.status_code == 429
+    assert "Too many attempts" in res_blocked.json()["detail"]
+
+    # Clean up limiter
+    login_limiter.clear()
+
+
+def test_forgot_and_reset_password_flow(client, test_db, monkeypatch):
+    """Verify forgot-password enumeration safety, background token creation, and reset flow."""
+    import hashlib
+    from unittest.mock import MagicMock
+    from app.services import email_service
+
+    forgot_password_limiter.clear()
+
+    # Mock email sender so no real emails are ever sent
+    mock_sender = MagicMock(return_value=True)
+    monkeypatch.setattr("app.api.auth.send_password_reset_email", mock_sender)
+    monkeypatch.setattr(email_service, "send_password_reset_email", mock_sender)
+
+    # 1. Malformed email on forgot-password -> 422
+    res_malformed = client.post("/api/auth/forgot-password", json={
+        "email": "invalid-format",
+    })
+    assert res_malformed.status_code == 422
+    assert res_malformed.json()["detail"] == "Enter a valid email address"
+
+    # 2. Non-existent email -> 200 with standard message
+    res_ghost = client.post("/api/auth/forgot-password", json={
+        "email": "nonexistent_person@example.com",
+    })
+    assert res_ghost.status_code == 200
+    assert res_ghost.json()["message"] == "If this email is registered, a password reset link has been sent."
+    assert mock_sender.call_count == 0
+
+    # 3. Register a real user
+    client.post("/api/auth/signup", json={
+        "email": "reset_user@example.com",
+        "password": "OldPassword123!",
+    })
+
+    # 4. Request password reset for existing user -> 200 with exact same message
+    res_exist = client.post("/api/auth/forgot-password", json={
+        "email": "reset_user@example.com",
+    })
+    assert res_exist.status_code == 200
+    assert res_exist.json()["message"] == "If this email is registered, a password reset link has been sent."
+    assert mock_sender.call_count == 1
+
+    # Extract sent reset link from mock call
+    call_args = mock_sender.call_args[0]
+    to_email, reset_link = call_args[0], call_args[1]
+    assert to_email == "reset_user@example.com"
+    assert "token=" in reset_link
+    raw_token = reset_link.split("token=")[-1]
+
+    # Verify token stored in DB is hashed with sha256 (raw token never stored)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    db_token = test_db.query(PasswordResetToken).filter(
+        PasswordResetToken.token_hash == token_hash
+    ).first()
+    assert db_token is not None
+    assert db_token.used_at is None
+    assert db_token.token_hash != raw_token
+
+    # 5. Reset password with invalid token -> 400
+    res_bad_token = client.post("/api/auth/reset-password", json={
+        "token": "fake-invalid-token",
+        "new_password": "BrandNewPassword123!",
+    })
+    assert res_bad_token.status_code == 400
+    assert res_bad_token.json()["detail"] == "Invalid or expired reset link"
+
+    # 6. Reset password with short password (<8 chars) -> 422
+    res_short = client.post("/api/auth/reset-password", json={
+        "token": raw_token,
+        "new_password": "short",
+    })
+    assert res_short.status_code == 422
+
+    # 7. Successful password reset
+    res_success = client.post("/api/auth/reset-password", json={
+        "token": raw_token,
+        "new_password": "BrandNewPassword123!",
+    })
+    assert res_success.status_code == 200
+    assert res_success.json()["message"] == "Password updated. You can now sign in."
+
+    # 8. Re-using same token fails -> 400
+    res_reuse = client.post("/api/auth/reset-password", json={
+        "token": raw_token,
+        "new_password": "BrandNewPassword123!",
+    })
+    assert res_reuse.status_code == 400
+    assert res_reuse.json()["detail"] == "Invalid or expired reset link"
+
+    # 9. Login with old password fails
+    res_old_login = client.post("/api/auth/login", json={
+        "email": "reset_user@example.com",
+        "password": "OldPassword123!",
+    })
+    assert res_old_login.status_code == 401
+
+    # 10. Login with new password succeeds
+    res_new_login = client.post("/api/auth/login", json={
+        "email": "reset_user@example.com",
+        "password": "BrandNewPassword123!",
+    })
+    assert res_new_login.status_code == 200
+    assert "access_token" in res_new_login.json()

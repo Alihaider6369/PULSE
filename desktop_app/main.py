@@ -130,6 +130,11 @@ from PySide6.QtWidgets import QApplication
 from desktop_app.ui.main_window import MainWindow
 
 
+def should_auto_start_monitoring(args: list[str]) -> bool:
+    """Return True if command line args specify auto-start via protocol or CLI flag."""
+    return any(arg.lower().startswith("pulse://start") or arg.lower() == "--start" for arg in args)
+
+
 def main() -> None:
 
     # High DPI support
@@ -154,6 +159,10 @@ def main() -> None:
     if icon_path.exists():
         window.setWindowIcon(QIcon(str(icon_path)))
     window.show()
+
+    # Automatically trigger monitoring if launched via protocol handler or CLI
+    if should_auto_start_monitoring(sys.argv[1:]):
+        window.start_monitoring()
 
     sys.exit(app.exec())
 

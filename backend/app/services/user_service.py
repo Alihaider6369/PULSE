@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session as DBSession
 
-from app.core.security import hash_password, verify_password
+from app.core.security import DUMMY_BCRYPT_HASH, hash_password, verify_password
 from app.models.setting import Setting
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
@@ -48,6 +48,7 @@ def authenticate_user(db: DBSession, data: UserLogin) -> Optional[User]:
     """Verify credentials and return User if valid, None otherwise."""
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
+        verify_password(data.password, DUMMY_BCRYPT_HASH)
         return None
     if not verify_password(data.password, user.hashed_password):
         return None

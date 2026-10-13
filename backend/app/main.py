@@ -5,9 +5,10 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import router as auth_router
@@ -24,6 +25,33 @@ app = FastAPI(
     version="0.2.0",
     description="Ergonomic desk posture tracking and awareness system API",
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Format validation errors into clear client-facing messages."""
+    errors = exc.errors()
+    for err in errors:
+        loc = err.get("loc", ())
+        msg = err.get("msg", "")
+        if "email" in loc:
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={"detail": "Enter a valid email address"},
+            )
+        if ("password" in loc or "new_password" in loc) and ("8" in msg or "length" in msg):
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={"detail": "Password must be at least 8 characters long"},
+            )
+    msg = errors[0].get("msg", "Validation error") if errors else "Validation error"
+    if msg.startswith("Value error, "):
+        msg = msg[len("Value error, "):]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": msg},
+    )
+
 
 # CORS Middleware for web dashboard
 app.add_middleware(
@@ -70,3 +98,11 @@ def history_page():
 @app.get("/live.html")
 def live_page():
     return FileResponse(FRONTEND_DIR / "live.html")
+
+
+@app.get("/reset-password.html")
+def reset_password_page():
+    reset_file = FRONTEND_DIR / "reset-password.html"
+    if reset_file.exists():
+        return FileResponse(reset_file)
+    return FileResponse(FRONTEND_DIR / "index.html")

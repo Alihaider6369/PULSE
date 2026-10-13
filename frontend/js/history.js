@@ -55,7 +55,8 @@ function render() {
 async function loadHistory() {
   try {
     const fetchFunc = window.Auth ? window.Auth.authFetch.bind(window.Auth) : fetch;
-    const res = await fetchFunc(API);
+    const targetUrl = window.getPulseApiUrl ? window.getPulseApiUrl(API) : API;
+    const res = await fetchFunc(targetUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allSessions = await res.json();
     render();
