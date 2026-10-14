@@ -47,3 +47,5 @@ desktop_app/data/
 
 .vercel
 .env*
+.agents/
+skills-lock.json
