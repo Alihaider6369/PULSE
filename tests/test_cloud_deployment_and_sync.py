@@ -79,14 +79,18 @@ def test_frontend_launch_and_download_elements():
     assert 'href="pulse://start"' in index_html, "Dashboard index.html must feature pulse://start link"
     assert 'id="btn-download-app"' in index_html, "Dashboard index.html must feature download app link"
     assert "desktop-launch-bar" in index_html
+    assert 'href="https://github.com/Alihaider6369/PULSE/releases"' in index_html
+    assert "alihaider/pulse" not in index_html
 
     # live.html check
     assert 'href="pulse://start"' in live_html, "live.html must feature pulse://start link"
     assert 'id="btn-live-download"' in live_html, "live.html must feature download app link"
+    assert 'href="https://github.com/Alihaider6369/PULSE/releases"' in live_html
+    assert "alihaider/pulse" not in live_html
 
 
 def test_vercel_json_configuration():
-    """Verify vercel.json contains required routes, rewrites, and security headers."""
+    """Verify vercel.json contains robust routes, rewrites, and security headers."""
     import json
     vercel_path = ROOT / "vercel.json"
     assert vercel_path.exists(), "vercel.json must exist"
@@ -94,10 +98,35 @@ def test_vercel_json_configuration():
     with open(vercel_path, "r", encoding="utf-8") as f:
         vcfg = json.load(f)
 
-    # Verify api rewrite
+    # cleanUrls should NOT be true to prevent conflicts with subfolder rewrite destinations
+    assert vcfg.get("cleanUrls") is not True, "cleanUrls must not be true when mapping subfolder HTML destinations"
+
     rewrites = vcfg.get("rewrites", [])
-    has_api_rewrite = any("/api" in r.get("source", "") and r.get("destination", "").endswith("api/index.py") for r in rewrites)
-    assert has_api_rewrite, "vercel.json must route /api/(.*) to /api/index.py"
+    assert len(rewrites) > 0, "vercel.json must have rewrites defined"
+
+    # Verify api rewrite is first to avoid accidental HTML rewrites of API requests
+    assert rewrites[0].get("source") == "/api/:match*"
+    assert rewrites[0].get("destination") == "/api/index.py"
+
+    # Verify static asset rewrites
+    rewrite_map = {r["source"]: r["destination"] for r in rewrites}
+    assert rewrite_map.get("/css/:match*") == "/frontend/css/:match*"
+    assert rewrite_map.get("/js/:match*") == "/frontend/js/:match*"
+
+    # Verify root and clean/extension page rewrites
+    assert rewrite_map.get("/") == "/frontend/index.html"
+    assert rewrite_map.get("/live") == "/frontend/live.html"
+    assert rewrite_map.get("/live.html") == "/frontend/live.html"
+    assert rewrite_map.get("/history") == "/frontend/history.html"
+    assert rewrite_map.get("/history.html") == "/frontend/history.html"
+    assert rewrite_map.get("/settings") == "/frontend/settings.html"
+    assert rewrite_map.get("/settings.html") == "/frontend/settings.html"
+    assert rewrite_map.get("/reset-password") == "/frontend/reset-password.html"
+    assert rewrite_map.get("/reset-password.html") == "/frontend/reset-password.html"
+
+    # Ensure no invalid $1 tokens exist in rewrite destinations
+    for r in rewrites:
+        assert "$1" not in r.get("destination", ""), f"Invalid $1 token found in rewrite: {r}"
 
     # Verify security headers
     headers = vcfg.get("headers", [])

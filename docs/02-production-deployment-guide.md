@@ -43,11 +43,29 @@ A template file is provided at [`backend/.env.production.example`](file:///D:/PU
 | `SMTP_USER` | String | Conditional | SMTP username (required if `SMTP_HOST` is configured) | `apikey` |
 | `SMTP_PASSWORD` | String | Conditional | SMTP password or API token (required if `SMTP_HOST` is configured) | Configured in cloud secrets |
 | `SMTP_FROM` | String | No | Sender address in From header (defaults to `SMTP_USER` if omitted) | `noreply@pulse.example.com` |
+| `UPSTASH_REDIS_REST_URL` | String | Conditional | Upstash Redis REST API HTTPS URL (Recommended for Vercel serverless) | `https://xxxx.upstash.io` |
+| `UPSTASH_REDIS_REST_TOKEN` | String | Conditional | Upstash Redis REST API bearer token | Upstash console secret |
+| `REDIS_URL` | String | Conditional | Standard Redis connection URI (TCP/TLS) | `rediss://default:TOKEN@xxxx.upstash.io:6379` |
+| `LIVE_STATUS_TTL_SECONDS` | Integer | No | Telemetry state time-to-live in seconds before auto-expiring | `15` |
 
 > [!WARNING]
 > Never commit real production `.env` files or hardcoded credentials to Git. Inject environment variables using your cloud provider's encrypted secrets manager.
 >
 > **Mandatory Secrets:** `SECRET_KEY` and `POSTGRES_PASSWORD` are mandatory and must be set in `.env` (generate secure values with: `openssl rand -hex 32`). The backend and compose services will refuse to start if these are missing.
+
+### Shared Live Monitor Storage (Upstash Redis for Serverless)
+
+Because Vercel serverless functions execute in isolated micro-containers across multiple instances, Python process memory is non-persistent and cannot synchronize live telemetry between desktop and web dashboard clients:
+
+- **Recommended Solution:** Free-tier [Upstash Redis](https://upstash.com/) with REST API support.
+- **Why REST for Serverless:** Upstash REST uses standard HTTPS requests with zero persistent TCP connections, eliminating connection pool limits, socket exhaustion, and cold-start connection latency.
+- **Configuration (Option 1 - Upstash REST API):**
+  1. Create a free database at [console.upstash.com](https://console.upstash.com) (or link the Upstash Integration in Vercel Marketplace).
+  2. Copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` into your Vercel Project Environment Variables (or `KV_REST_API_URL` / `KV_REST_API_TOKEN`).
+- **Configuration (Option 2 - Standard Redis URI):**
+  Set `REDIS_URL=rediss://default:<password>@<host>:6379` in your environment.
+- **Telemetry Auto-Expiration:** Live state automatically expires after `LIVE_STATUS_TTL_SECONDS` (default: 15s). If the desktop application closes or disconnects, the web dashboard automatically displays "Monitor is off" without showing stale detection data.
+- **Development vs. Production Safety:** In local development (`ENVIRONMENT=development`), an in-memory fallback is allowed for quick testing. In production or serverless environments (`ENVIRONMENT=production` or `VERCEL=1`), in-memory state is strictly rejected and the API reports an explicit `503 Service Unavailable` with setup instructions if storage is unconfigured.
 
 ### Password reset email (SMTP)
 

@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import OperationalError
 
 from app.api.auth import router as auth_router
 from app.api.live import router as live_router
@@ -53,6 +54,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+@app.exception_handler(OperationalError)
+async def db_operational_exception_handler(request: Request, exc: OperationalError):
+    """Handle database connection or operational failures gracefully without crashing."""
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": "Database service is temporarily unavailable. Please try again shortly."},
+    )
+
+
+
 # CORS Middleware for web dashboard
 app.add_middleware(
     CORSMiddleware,
@@ -80,26 +91,40 @@ app.mount("/css", StaticFiles(directory=FRONTEND_DIR / "css"), name="css")
 app.mount("/js", StaticFiles(directory=FRONTEND_DIR / "js"), name="js")
 
 
+@app.get("/favicon.ico")
+def favicon():
+    ico_file = Path(__file__).resolve().parents[2] / "desktop_app" / "resources" / "pulse.ico"
+    if ico_file.exists():
+        return FileResponse(ico_file)
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+
 @app.get("/")
+@app.get("/index")
+@app.get("/index.html")
 def dashboard():
     return FileResponse(FRONTEND_DIR / "index.html")
 
 
+@app.get("/settings")
 @app.get("/settings.html")
 def settings_page():
     return FileResponse(FRONTEND_DIR / "settings.html")
 
 
+@app.get("/history")
 @app.get("/history.html")
 def history_page():
     return FileResponse(FRONTEND_DIR / "history.html")
 
 
+@app.get("/live")
 @app.get("/live.html")
 def live_page():
     return FileResponse(FRONTEND_DIR / "live.html")
 
 
+@app.get("/reset-password")
 @app.get("/reset-password.html")
 def reset_password_page():
     reset_file = FRONTEND_DIR / "reset-password.html"

@@ -1,9 +1,10 @@
 
+import os
 from pathlib import Path
 from typing import List
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from pydantic import field_validator, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,6 +35,35 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     environment: str = "development"
 
+    upstash_redis_rest_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "UPSTASH_REDIS_REST_URL",
+            "KV_REST_API_URL",
+            "upstash_redis_rest_url",
+            "kv_rest_api_url",
+        ),
+    )
+    upstash_redis_rest_token: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "UPSTASH_REDIS_REST_TOKEN",
+            "KV_REST_API_TOKEN",
+            "upstash_redis_rest_token",
+            "kv_rest_api_token",
+        ),
+    )
+    redis_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "REDIS_URL",
+            "KV_URL",
+            "redis_url",
+            "kv_url",
+        ),
+    )
+    live_status_ttl_seconds: int = 15
+
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
@@ -58,10 +88,61 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_secret_key(self) -> "Settings":
-        if not self.secret_key or not self.secret_key.strip():
+        key = (self.secret_key or "").strip()
+        if not key:
             raise RuntimeError(
                 "SECRET_KEY environment variable is required"
             )
+        insecure_keys = {
+            "secret",
+            "secret_key",
+            "password",
+            "changethis",
+            "change_this",
+            "replace_with_cryptographically_secure_hex_string_min_64_chars",
+        }
+        if key.lower() in insecure_keys:
+            raise RuntimeError(
+                "SECRET_KEY cannot be a default or placeholder value"
+            )
+        is_prod = self.environment == "production" or bool(os.environ.get("VERCEL"))
+        if is_prod and len(key) < 32:
+            raise RuntimeError(
+                "SECRET_KEY must be at least 32 characters long in production/serverless"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_database_url(self) -> "Settings":
+        db_url = (self.database_url or "").strip()
+        is_prod = self.environment == "production" or bool(os.environ.get("VERCEL"))
+        if is_prod:
+            if not db_url:
+                raise RuntimeError(
+                    "DATABASE_URL environment variable is required in production/serverless"
+                )
+            if db_url.startswith("sqlite:"):
+                raise RuntimeError(
+                    "SQLite is not supported in production/serverless environments. "
+                    "Configure a remote PostgreSQL database (such as Neon) in DATABASE_URL."
+                )
+            if (
+                "pulse_user:password@localhost" in db_url
+                or "localhost:5432" in db_url
+                or "127.0.0.1:5432" in db_url
+            ):
+                raise RuntimeError(
+                    "DATABASE_URL is set to local default. In production/serverless, "
+                    "a remote managed PostgreSQL database (such as Neon) is required."
+                )
+            if not (
+                db_url.startswith("postgresql://")
+                or db_url.startswith("postgresql+")
+                or db_url.startswith("postgres://")
+            ):
+                raise RuntimeError(
+                    "DATABASE_URL must use the postgresql:// or postgresql+psycopg:// scheme in production."
+                )
         return self
 
     @model_validator(mode="after")
@@ -94,6 +175,27 @@ class Settings(BaseSettings):
             for origin in self.cors_origins.split(",")
             if origin.strip()
         ]
+
+    @property
+    def effective_upstash_url(self) -> str:
+        return (
+            self.upstash_redis_rest_url.strip()
+            or os.environ.get("KV_REST_API_URL", "").strip()
+        )
+
+    @property
+    def effective_upstash_token(self) -> str:
+        return (
+            self.upstash_redis_rest_token.strip()
+            or os.environ.get("KV_REST_API_TOKEN", "").strip()
+        )
+
+    @property
+    def effective_redis_url(self) -> str:
+        return (
+            self.redis_url.strip()
+            or os.environ.get("KV_URL", "").strip()
+        )
 
     @property
     def sync_database_url(self) -> str:

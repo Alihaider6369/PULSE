@@ -35,6 +35,10 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       APP_BASE_URL: ${APP_BASE_URL:-}
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
+      REDIS_URL: ${REDIS_URL:-}
+      LIVE_STATUS_TTL_SECONDS: ${LIVE_STATUS_TTL_SECONDS:-15}
     depends_on:
       db:
         condition: service_healthy

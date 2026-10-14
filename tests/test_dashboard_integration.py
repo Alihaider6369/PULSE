@@ -107,19 +107,46 @@ def test_dashboard_user_session_visibility(client):
 
 
 def test_dashboard_static_pages_availability(client):
-    """Verify that frontend HTML assets and health endpoint respond with 200."""
+    """Verify that frontend HTML assets (clean and .html), static assets, and health endpoint respond with 200."""
     res_index = client.get("/")
     assert res_index.status_code == 200
     assert "PULSE" in res_index.text
 
-    res_history = client.get("/history.html")
+    # Clean URLs
+    res_history = client.get("/history")
     assert res_history.status_code == 200
-
-    res_settings = client.get("/settings.html")
+    res_settings = client.get("/settings")
     assert res_settings.status_code == 200
-
-    res_live = client.get("/live.html")
+    res_live = client.get("/live")
     assert res_live.status_code == 200
+    res_reset = client.get("/reset-password")
+    assert res_reset.status_code == 200
+
+    # .html URLs
+    res_history_html = client.get("/history.html")
+    assert res_history_html.status_code == 200
+    res_settings_html = client.get("/settings.html")
+    assert res_settings_html.status_code == 200
+    res_live_html = client.get("/live.html")
+    assert res_live_html.status_code == 200
+    res_reset_html = client.get("/reset-password.html")
+    assert res_reset_html.status_code == 200
+
+    # Static CSS and JS assets
+    res_css = client.get("/css/style.css")
+    assert res_css.status_code == 200
+    assert "box-sizing" in res_css.text
+
+    res_js = client.get("/js/auth.js")
+    assert res_js.status_code == 200
+    assert "getPulseApiUrl" in res_js.text
+
+    res_ico = client.get("/favicon.ico")
+    assert res_ico.status_code == 200
+
+    # Index variants
+    assert client.get("/index").status_code == 200
+    assert client.get("/index.html").status_code == 200
 
     res_health = client.get("/api/health")
     assert res_health.status_code == 200
