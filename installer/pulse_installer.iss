@@ -4,7 +4,7 @@
 #define MyAppName "PULSE"
 #define MyAppVersion "1.1.0"
 #define MyAppPublisher "PULSE Posture"
-#define MyAppURL "http://127.0.0.1:8000"
+#define MyAppURL "https://pulse-nu-wine-61.vercel.app"
 #define MyAppExeName "PULSE.exe"
 
 [Setup]

@@ -79,7 +79,7 @@ OFFLINE_CACHE_FILE = APP_DATA_DIR / "offline_sessions.json"
 
 @dataclass
 class AppConfig:
-    api_url: str = "http://127.0.0.1:8000/api"
+    api_url: str = "https://pulse-nu-wine-61.vercel.app/api"
     camera_index: int = 0
     poor_posture_threshold_seconds: float = 30.0
     cooldown_seconds: float = 300.0

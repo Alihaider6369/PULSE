@@ -17,7 +17,7 @@ EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 class PulseApiClient:
     """Thread-safe API client for PULSE with JWT auth and SQLite synchronization."""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000/api", storage: Optional[LocalStorage] = None):
+    def __init__(self, base_url: str = "https://pulse-nu-wine-61.vercel.app/api", storage: Optional[LocalStorage] = None):
         self.base_url = base_url.rstrip("/")
         self.storage = storage or LocalStorage()
         self.token: Optional[str] = None
