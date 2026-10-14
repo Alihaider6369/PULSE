@@ -111,7 +111,7 @@ async function loadDashboard() {
   const status = document.getElementById("status");
 
   // Configure dynamic desktop download URL if configured
-  const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://drive.google.com/file/d/1b4QAO8aYw5qVoDVsAsaow3QdHDgMmYCI/view?usp=sharing";
+  const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://github.com/Alihaider6369/PULSE/releases/download/v1.1.0/PULSE_Setup_v1.1.0.exe";
   const downloadBtn = document.getElementById("btn-download-app");
   if (downloadBtn) {
     downloadBtn.href = downloadUrl;

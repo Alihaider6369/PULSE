@@ -79,13 +79,13 @@ def test_frontend_launch_and_download_elements():
     assert 'href="pulse://start"' in index_html, "Dashboard index.html must feature pulse://start link"
     assert 'id="btn-download-app"' in index_html, "Dashboard index.html must feature download app link"
     assert "desktop-launch-bar" in index_html
-    assert 'href="https://drive.google.com/file/d/1b4QAO8aYw5qVoDVsAsaow3QdHDgMmYCI/view?usp=sharing"' in index_html
+    assert 'href="https://github.com/Alihaider6369/PULSE/releases/download/v1.1.0/PULSE_Setup_v1.1.0.exe"' in index_html
     assert "alihaider/pulse" not in index_html
 
     # live.html check
     assert 'href="pulse://start"' in live_html, "live.html must feature pulse://start link"
     assert 'id="btn-live-download"' in live_html, "live.html must feature download app link"
-    assert 'href="https://drive.google.com/file/d/1b4QAO8aYw5qVoDVsAsaow3QdHDgMmYCI/view?usp=sharing"' in live_html
+    assert 'href="https://github.com/Alihaider6369/PULSE/releases/download/v1.1.0/PULSE_Setup_v1.1.0.exe"' in live_html
     assert "alihaider/pulse" not in live_html
 
 
