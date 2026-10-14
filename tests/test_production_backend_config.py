@@ -134,6 +134,27 @@ def test_database_url_neon_postgres_normalizes_with_ssl():
     assert "ep-cool-frog-123456-pooler.us-east-2.aws.neon.tech" in norm
 
 
+def test_database_url_sanitizes_psql_wrapper_and_quotes():
+    """Verify that Neon connection strings with psql wrapper, quotes, or env prefixes are cleanly sanitized."""
+    raw_copied_strings = [
+        f"psql '{NEON_DATABASE_URL}'",
+        f'psql "{NEON_DATABASE_URL}"',
+        f"'{NEON_DATABASE_URL}'",
+        f'"{NEON_DATABASE_URL}"',
+        f"DATABASE_URL='{NEON_DATABASE_URL}'",
+        f"{NEON_DATABASE_URL};",
+    ]
+    for raw in raw_copied_strings:
+        cfg = Settings(
+            secret_key=STRONG_PROD_SECRET,
+            environment="production",
+            database_url=raw,
+        )
+        assert cfg.sync_database_url.startswith("postgresql+psycopg://")
+        assert "sslmode=require" in cfg.sync_database_url
+        assert "ep-cool-frog-123456-pooler.us-east-2.aws.neon.tech" in cfg.sync_database_url
+
+
 # ---------------- 3. Upstash Redis & Vercel KV Alias Audit ----------------
 
 

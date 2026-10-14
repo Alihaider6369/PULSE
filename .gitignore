@@ -44,3 +44,6 @@ build/
 dist_installer/
 *.egg-info/
 desktop_app/data/
+
+.vercel
+.env*

@@ -18,8 +18,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = (
-        "postgresql+psycopg://pulse_user:password@localhost:5432/pulse_db"
+    database_url: str = Field(
+        default="postgresql+psycopg://pulse_user:password@localhost:5432/pulse_db",
+        validation_alias=AliasChoices(
+            "DATABASE_URL",
+            "POSTGRES_URL",
+            "database_url",
+            "postgres_url",
+        ),
     )
 
     secret_key: str = ""
@@ -78,6 +84,24 @@ class Settings(BaseSettings):
         if v is None or v == "":
             return 587
         return int(v)
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def clean_database_url(cls, v):
+        if not v:
+            return v
+        s = str(v).strip()
+        if s.startswith("DATABASE_URL="):
+            s = s[len("DATABASE_URL="):].strip()
+        if s.startswith("psql "):
+            s = s[5:].strip()
+        while (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+            s = s[1:-1].strip()
+        if s.startswith("psql "):
+            s = s[5:].strip()
+        while (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+            s = s[1:-1].strip()
+        return s.rstrip(";").strip()
 
     @field_validator("app_base_url", mode="before")
     @classmethod
@@ -201,7 +225,18 @@ class Settings(BaseSettings):
     def sync_database_url(self) -> str:
         """Normalize PostgreSQL URLs for SQLAlchemy and Psycopg 3."""
 
-        raw_url = self.database_url.strip()
+        raw_url = (self.database_url or "").strip()
+        if raw_url.startswith("DATABASE_URL="):
+            raw_url = raw_url[len("DATABASE_URL="):].strip()
+        if raw_url.startswith("psql "):
+            raw_url = raw_url[5:].strip()
+        while (raw_url.startswith("'") and raw_url.endswith("'")) or (raw_url.startswith('"') and raw_url.endswith('"')):
+            raw_url = raw_url[1:-1].strip()
+        if raw_url.startswith("psql "):
+            raw_url = raw_url[5:].strip()
+        while (raw_url.startswith("'") and raw_url.endswith("'")) or (raw_url.startswith('"') and raw_url.endswith('"')):
+            raw_url = raw_url[1:-1].strip()
+        raw_url = raw_url.rstrip(";").strip()
 
         if not raw_url:
             return raw_url

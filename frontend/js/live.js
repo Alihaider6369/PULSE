@@ -68,7 +68,7 @@ async function refresh() {
   }
 }
 
-const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://github.com/Alihaider6369/PULSE/releases";
+const downloadUrl = window.PULSE_DOWNLOAD_URL || "https://drive.google.com/file/d/1b4QAO8aYw5qVoDVsAsaow3QdHDgMmYCI/view?usp=sharing";
 const liveDownloadBtn = document.getElementById("btn-live-download");
 if (liveDownloadBtn) liveDownloadBtn.href = downloadUrl;
 
