@@ -12,7 +12,8 @@ from app.schemas.user import UserCreate, UserLogin
 
 def create_user(db: DBSession, data: UserCreate) -> User:
     """Register a new user and initialize their personal settings row."""
-    existing = db.query(User).filter(User.email == data.email).first()
+    normalized_email = data.email.strip().lower()
+    existing = db.query(User).filter(User.email == normalized_email).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -20,7 +21,7 @@ def create_user(db: DBSession, data: UserCreate) -> User:
         )
 
     user = User(
-        email=data.email,
+        email=normalized_email,
         hashed_password=hash_password(data.password),
         full_name=data.full_name,
         is_active=True,
@@ -46,7 +47,8 @@ def create_user(db: DBSession, data: UserCreate) -> User:
 
 def authenticate_user(db: DBSession, data: UserLogin) -> Optional[User]:
     """Verify credentials and return User if valid, None otherwise."""
-    user = db.query(User).filter(User.email == data.email).first()
+    normalized_email = data.email.strip().lower()
+    user = db.query(User).filter(User.email == normalized_email).first()
     if not user:
         verify_password(data.password, DUMMY_BCRYPT_HASH)
         return None
